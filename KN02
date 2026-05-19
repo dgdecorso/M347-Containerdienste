@@ -1,0 +1,139 @@
+# KN-02 – Dockerfile
+
+---
+
+## A) Dockerfile I
+
+### Dokumentiertes Dockerfile (Original)
+
+```dockerfile
+FROM nginx                                  # Basisimage: verwendet das offizielle nginx-Image als Grundlage
+COPY static-html-directory /var/www/html    # Kopiert den lokalen Ordner in den HTML-Root des Containers
+EXPOSE 80                                   # Gibt Port 80 frei, damit der Container über HTTP erreichbar ist
+```
+
+---
+
+### Angepasstes Dockerfile
+
+```dockerfile
+FROM nginx
+WORKDIR /usr/share/nginx/html
+COPY helloworld.html .
+EXPOSE 80
+```
+
+---
+
+### Docker-Befehle
+
+```bash
+# Build
+docker build -t benutzername/m347:kn02a .
+
+# Container starten
+docker run -d -p 8080:80 --name kn02a benutzername/m347:kn02a
+
+# Push
+docker push benutzername/m347:kn02a
+```
+
+---
+
+### Screenshots
+
+**Docker Desktop – Image kn02a:**
+
+![Docker Desktop kn02a]()
+
+**Seite helloworld.html im Browser:**
+
+![helloworld.html]()
+
+---
+
+## B) Dockerfile II
+
+### DB-Container (MariaDB)
+
+#### Dockerfile
+
+```dockerfile
+FROM mariadb
+ENV MYSQL_ROOT_PASSWORD=rootpassword
+ENV MYSQL_DATABASE=mysql
+EXPOSE 3306
+```
+
+#### Docker-Befehle
+
+```bash
+# Build
+docker build -t benutzername/m347:kn02b-db .
+
+# Container starten
+docker run -d -p 3306:3306 --name kn02b-db benutzername/m347:kn02b-db
+
+# Push
+docker push benutzername/m347:kn02b-db
+```
+
+#### Screenshot – telnet auf DB-Server
+
+```bash
+telnet localhost 3306
+```
+
+![telnet DB]()
+
+---
+
+### Web-Container (PHP + Apache)
+
+#### IP des DB-Containers herausfinden
+
+```bash
+docker inspect kn02b-db | grep IPAddress
+```
+
+#### Angepasste db.php
+
+```php
+$db_server   = "172.17.0.x"; // IP aus docker inspect
+$db_username = "root";
+$db_password = "rootpassword";
+```
+
+#### Dockerfile
+
+```dockerfile
+FROM php:8.0-apache
+WORKDIR /var/www/html
+COPY info.php .
+COPY db.php .
+RUN docker-php-ext-install mysqli
+EXPOSE 80
+```
+
+#### Docker-Befehle
+
+```bash
+# Build
+docker build -t benutzername/m347:kn02b-web .
+
+# Container starten
+docker run -d -p 8080:80 --name kn02b-web benutzername/m347:kn02b-web
+
+# Push
+docker push benutzername/m347:kn02b-web
+```
+
+#### Screenshots
+
+**info.php im Browser:**
+
+![info.php]()
+
+**db.php im Browser:**
+
+![db.php]()
